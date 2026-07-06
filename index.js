@@ -26,25 +26,30 @@ function createBot() {
         try { bot.end(); } catch (e) {}
     }
 
+    // এখানে আপনার নতুন আইপি, পোর্ট এবং সুন্দর একটি মেয়ের নাম দেওয়া হয়েছে
     bot = mineflayer.createBot({
         host: 'error7769.aternos.me',
         port: 29851,
-        username: 'sara1634',
+        username: 'Luna', // বটের নাম এখানে পরিবর্তন করতে পারেন
+        version: false, // এটি দিলে বট অটোমেটিক সার্ভারের ভার্সন চিনে নেবে
     });
 
     bot.on('login', () => {
-        console.log('বট সার্ভারে লগইন করেছে!');
+        console.log('বট সফলভাবে সার্ভারে লগইন করেছে!');
         mcData = require('minecraft-data')(bot.version);
     });
 
     bot.on('kicked', (reason) => {
-        console.log(`কিক করা হয়েছে: ${reason}. ৫ সেকেন্ড পর আবার চেষ্টা করা হচ্ছে...`);
+        console.log(`কিক করা হয়েছে। কারণ: ${reason}. ৫ সেকেন্ড পর আবার চেষ্টা করা হচ্ছে...`);
         clearInterval(followInterval);
         setTimeout(createBot, 5000);
     });
 
     bot.on('error', (err) => {
         console.log(`কানেকশন এরর: ${err.message}`);
+        if (err.code === 'ENOTFOUND' || err.code === 'ECONNREFUSED') {
+            console.log('সার্ভারটি হয়তো অফলাইন আছে। দয়া করে Aternos থেকে সার্ভারটি চালু (Online) করুন।');
+        }
     });
 
     bot.on('entityHurt', (entity) => {
