@@ -15,7 +15,7 @@ function loadAllowedPlayers() {
         const data = fs.readFileSync('allowedPlayers.json', 'utf8');
         return JSON.parse(data);
     } catch (err) {
-        console.log('প্লেয়ার তালিকা লোড করতে সমস্যা হয়েছে:', err.message);
+        console.log('Failed to load player list:', err.message);
         return [];
     }
 }
@@ -26,29 +26,30 @@ function createBot() {
         try { bot.end(); } catch (e) {}
     }
 
-    // এখানে আপনার নতুন আইপি, পোর্ট এবং সুন্দর একটি মেয়ের নাম দেওয়া হয়েছে
     bot = mineflayer.createBot({
         host: 'error7769.aternos.me',
         port: 29851,
-        username: 'Luna', // বটের নাম এখানে পরিবর্তন করতে পারেন
-        version: false, // এটি দিলে বট অটোমেটিক সার্ভারের ভার্সন চিনে নেবে
+        username: 'Luna', 
+        version: false, 
+        auth: 'offline' 
     });
 
     bot.on('login', () => {
-        console.log('বট সফলভাবে সার্ভারে লগইন করেছে!');
+        console.log('Bot successfully logged in to the server!');
         mcData = require('minecraft-data')(bot.version);
     });
 
-    bot.on('kicked', (reason) => {
-        console.log(`কিক করা হয়েছে। কারণ: ${reason}. ৫ সেকেন্ড পর আবার চেষ্টা করা হচ্ছে...`);
+    bot.on('kick', (reason) => {
+        let kickReason = typeof reason === 'object' ? JSON.stringify(reason) : reason;
+        console.log(`Kicked. Reason: ${kickReason}. Retrying in 5 seconds...`);
         clearInterval(followInterval);
         setTimeout(createBot, 5000);
     });
 
     bot.on('error', (err) => {
-        console.log(`কানেকশন এরর: ${err.message}`);
+        console.log(`Connection error: ${err.message}`);
         if (err.code === 'ENOTFOUND' || err.code === 'ECONNREFUSED') {
-            console.log('সার্ভারটি হয়তো অফলাইন আছে। দয়া করে Aternos থেকে সার্ভারটি চালু (Online) করুন।');
+            console.log('The server might be offline. Please start (Online) the server from Aternos.');
         }
     });
 
@@ -56,7 +57,7 @@ function createBot() {
         if (entity === bot.entity) {
             const attacker = bot.nearestEntity((e) => e !== bot.entity && (e.type === 'hostile' || e.type === 'player'));
             if (attacker) {
-                bot.chat('আমাকে আক্রমণ করছিস? ধর!');
+                bot.chat('Attacking me? Take this!');
                 bot.attack(attacker);
             }
         }
@@ -78,7 +79,7 @@ function createBot() {
     bot.on('end', () => {
         clearInterval(jumpInterval);
         clearInterval(followInterval);
-        console.log('সার্ভার থেকে ডিসকানেক্ট হয়েছে। ৫ সেকেন্ড পর রিস্টার্ট হচ্ছে...');
+        console.log('Disconnected from server. Restarting in 5 seconds...');
         setTimeout(createBot, 5000);
     });
 
@@ -90,16 +91,16 @@ function createBot() {
             const player = bot.players[username]?.entity;
             if (player) {
                 targetPlayer = player;
-                bot.chat(`আমি এখন আপনাকে ফলো করছি, ${username}`);
+                bot.chat(`I am now following you, ${username}`);
                 startFollowing();
             } else {
-                bot.chat('আপনাকে দেখতে পাচ্ছি না!');
+                bot.chat("I can't see you!");
             }
         } else if (message === 'stop') {
             targetPlayer = null;
             clearInterval(followInterval);
             bot.clearControlStates();
-            bot.chat('আমি ফলো করা বন্ধ করেছি।');
+            bot.chat('I have stopped following.');
         } else if (message.startsWith('fill')) {
             const args = message.split(' ');
             if (args.length === 8) {
@@ -145,9 +146,9 @@ async function goToSleep() {
     if (bedBlock) {
         try {
             await bot.sleep(bedBlock);
-            bot.chat('আমি ঘুমাচ্ছি, গুড নাইট!');
+            bot.chat("I'm going to sleep, good night!");
         } catch (err) {
-            console.log(`ঘুমাতে সমস্যা হয়েছে: ${err.message}`);
+            console.log(`Failed to sleep: ${err.message}`);
         }
     }
 }
@@ -157,7 +158,7 @@ async function fillArea(startX, startY, startZ, endX, endY, endZ, blockName) {
     const block = mcData.blocksByName[blockName];
     
     if (!block) {
-        bot.chat(`ব্লকটি পাওয়া যায়নি: ${blockName}`);
+        bot.chat(`Block not found: ${blockName}`);
         return;
     }
 
@@ -171,7 +172,7 @@ async function fillArea(startX, startY, startZ, endX, endY, endZ, blockName) {
                     await bot.equip(blockId, 'hand');
                     await bot.placeBlock(bot.blockAt(pos), new Vec3(0, 1, 0));
                 } catch (err) {
-                    console.log(`ব্লক বসাতে সমস্যা হয়েছে: ${err.message}`);
+                    console.log(`Error placing block: ${err.message}`);
                 }
             }
         }
